@@ -1,11 +1,11 @@
 {
-  "name": "mozjpeg_enc",
+  "name": "webp",
   "scripts": {
     "install": "napa",
     "build": "docker run --rm -v $(pwd):/src trzeci/emscripten-upstream ./build.sh"
   },
   "napa": {
-    "mozjpeg": "mozilla/mozjpeg#v3.3.1"
+    "libwebp": "webmproject/libwebp#v1.0.2"
   },
   "devDependencies": {
     "napa": "3.0.0"

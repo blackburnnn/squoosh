@@ -7,40 +7,59 @@ export OPTIMIZE="-Os -flto --llvm-lto 1"
 export LDFLAGS="${OPTIMIZE}"
 export CFLAGS="${OPTIMIZE}"
 export CPPFLAGS="${OPTIMIZE}"
-
 apt-get update
-apt-get install -qqy autoconf libtool libpng-dev pkg-config
+apt-get install -qqy autoconf libtool pkg-config
 
 echo "============================================="
-echo "Compiling mozjpeg"
+echo "Compiling libwebp"
 echo "============================================="
-(
-  cd node_modules/mozjpeg
+test -n "$SKIP_LIBWEBP" || (
+  cd node_modules/libwebp
   autoreconf -iv
-  emconfigure ./configure -C --without-simd
-  emmake make libjpeg.la rdswitch.o -j`nproc`
+  emconfigure ./configure -C \
+    --disable-libwebpdemux \
+    --disable-wic \
+    --disable-gif \
+    --disable-tiff \
+    --disable-jpeg \
+    --disable-png \
+    --disable-sdl \
+    --disable-gl \
+    --disable-threading \
+    --disable-neon-rtcd \
+    --disable-neon \
+    --disable-sse2 \
+    --disable-sse4.1
+  emmake make -j`nproc`
 )
-echo "============================================="
-echo "Compiling mozjpeg done"
-echo "============================================="
-
 echo "============================================="
 echo "Compiling wasm bindings"
 echo "============================================="
 (
   emcc \
-    --bind \
     ${OPTIMIZE} \
     --closure 1 \
+    --bind \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s MODULARIZE=1 \
-    -s 'EXPORT_NAME="mozjpeg_enc"' \
-    -I node_modules/mozjpeg \
-    -o ./mozjpeg_enc.js \
-    -std=c++11 \
-    mozjpeg_enc.cpp \
-    node_modules/mozjpeg/.libs/libjpeg.a \
-    node_modules/mozjpeg/rdswitch.o
+    -s 'EXPORT_NAME="webp_dec"' \
+    -I node_modules/libwebp \
+    -o dec/webp_dec.js \
+    dec/webp_dec.cpp \
+    node_modules/libwebp/src/.libs/libwebp.a
+)
+(
+  emcc \
+    ${OPTIMIZE} \
+    --closure 1 \
+    --bind \
+    -s ALLOW_MEMORY_GROWTH=1 \
+    -s MODULARIZE=1 \
+    -s 'EXPORT_NAME="webp_enc"' \
+    -I node_modules/libwebp \
+    -o enc/webp_enc.js \
+    enc/webp_enc.cpp \
+    node_modules/libwebp/src/.libs/libwebp.a
 )
 echo "============================================="
 echo "Compiling wasm bindings done"
